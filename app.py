@@ -138,6 +138,8 @@ if pagina == "Meteo Attuale":
                         continue
                     if not data_target and data_obj.weekday() != idx:
                         continue
+                    if not data_target and data_obj.weekday() != idx:
+                        continue
 
                     min_t = r.get("min", "?")
                     max_t = r.get("max", "?")
@@ -181,6 +183,9 @@ if pagina == "Meteo Attuale":
             st.success("🧠 " + risposta)
     except Exception as e:
         st.error("❌ Errore AI Assistant: " + str(e))
+
+
+    
 
         else:
             st.warning("Nessun dato disponibile.")
