@@ -63,6 +63,38 @@ with st.sidebar:
 if pagina == "Meteo Attuale":
     st.subheader("📍 Condizioni Attuali")
 
+    
+            st.success(f"{dati['temperatura']} °C")
+        with col2:
+            st.markdown("### 💧 Umidità")
+            st.info(f"{dati['umidita']} %")
+        with col3:
+            st.markdown("### 💨 Vento")
+            st.warning(f"{dati['vento']} km/h")
+
+        col4, col5 = st.columns(2)
+        with col4:
+            st.markdown("### 🌞 UV Index")
+            st.success(f"{dati['uv']}")
+        with col5:
+            st.markdown("### 🧭 Pressione")
+            st.info(f"{dati['pressione']} hPa")
+
+        thom = calcola_indice_thom(dati['temperatura'], dati['umidita'])
+        if thom < 70:
+            colore, desc = "🟢", "Confort ideale"
+        elif thom < 75:
+            colore, desc = "🟡", "Leggero disagio"
+        elif thom < 80:
+            colore, desc = "🟠", "Disagio percepito"
+        else:
+            colore, desc = "🔴", "Pericoloso per la salute"
+        st.markdown(f"### {colore} Indice di Thom: {thom}")
+        st.info(f"**Interpretazione:** {desc} — misura il disagio da temperatura e umidità.")
+
+        st.subheader("📈 Andamento ultime 24 ore")
+        df = get_24h_data()
+
     # === AI METEO ASSISTANT — SOLO IN METEO ATTUALE ===
     st.markdown("### 🧠 AI Meteo Assistant")
     st.markdown("""
@@ -145,41 +177,6 @@ if pagina == "Meteo Attuale":
     except Exception as e:
         st.error("❌ Errore AI Assistant: " + str(e))
 
-    dati = get_meteo_data()
-    if dati:
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown("### 🌡️ Temperatura")
-            st.success(f"{dati['temperatura']} °C")
-        with col2:
-            st.markdown("### 💧 Umidità")
-            st.info(f"{dati['umidita']} %")
-        with col3:
-            st.markdown("### 💨 Vento")
-            st.warning(f"{dati['vento']} km/h")
-
-        col4, col5 = st.columns(2)
-        with col4:
-            st.markdown("### 🌞 UV Index")
-            st.success(f"{dati['uv']}")
-        with col5:
-            st.markdown("### 🧭 Pressione")
-            st.info(f"{dati['pressione']} hPa")
-
-        thom = calcola_indice_thom(dati['temperatura'], dati['umidita'])
-        if thom < 70:
-            colore, desc = "🟢", "Confort ideale"
-        elif thom < 75:
-            colore, desc = "🟡", "Leggero disagio"
-        elif thom < 80:
-            colore, desc = "🟠", "Disagio percepito"
-        else:
-            colore, desc = "🔴", "Pericoloso per la salute"
-        st.markdown(f"### {colore} Indice di Thom: {thom}")
-        st.info(f"**Interpretazione:** {desc} — misura il disagio da temperatura e umidità.")
-
-        st.subheader("📈 Andamento ultime 24 ore")
-        df = get_24h_data()
         if not df.empty:
             st.line_chart(df.set_index("time"))
         else:
@@ -196,7 +193,9 @@ elif pagina == "Previsioni":
     df = get_previsioni()
     if not df.empty:
         for i, row in df.iterrows():
-            giorno = datetime.strptime(row["data"], "%Y-%m-%d").strftime("%A %d/%m")
+            giorni_it = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+        data_obj = datetime.strptime(row["data"], "%Y-%m-%d")
+        giorno = f"{giorni_it[data_obj.weekday()]} {data_obj.strftime('%d/%m')}"
             icona = "☀️" if row["prec"] < 2 else "🌧️"
             condizione = "Sereno e soleggiato" if row["prec"] < 2 else "Rovesci nel pomeriggio"
             colore_sfondo = "#e3f2fd" if row["prec"] < 2 else "#fce4ec"
