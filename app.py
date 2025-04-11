@@ -148,7 +148,7 @@ elif pagina == "Webcam":
     st.subheader("📷 Webcam Torre Annunziata")
     st.markdown("🔗 [Clicca qui per visualizzare la webcam live su SkylineWebcams](https://www.skylinewebcams.com/it/webcam/italia/campania/napoli/torre-annunziata.html)")
 
-# === AI METEO ASSISTANT ===
+# === AI METEO ASSISTANT CON LOG ERRORE ===
 def interpreta_ai(domanda, previsioni):
     from datetime import datetime as dt
     domanda = domanda.lower()
@@ -178,7 +178,8 @@ try:
     domanda_ai = st.text_input("Scrivi la tua domanda meteo:", placeholder="Domani piove? Sab afa? Ombrello lun?")
     if domanda_ai:
         previsioni_ai = get_forecast()
+        st.write("📋 Dati disponibili:", previsioni_ai.head())  # mostra i dati nel frontend
         risposta_ai = interpreta_ai(domanda_ai, previsioni_ai)
         st.success("🤖 " + risposta_ai)
-except:
-    st.warning("AI Meteo Assistant non disponibile.")
+except Exception as e:
+    st.error("❌ Errore AI Assistant: " + str(e))
