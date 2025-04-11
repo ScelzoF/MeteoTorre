@@ -62,7 +62,7 @@ st.markdown("""
 
 # SIDEBAR
 with st.sidebar:
-    pagina = st.radio("📋 Menu", ["Meteo Attuale", "Previsioni", "Radar & Satellite", "Webcam"])
+    pagina = st.radio("📋 Menu", ["Meteo Attuale", "Andamento 24 Ore", "Previsioni", "Radar & Satellite", "Webcam"])
     st.markdown("---")
     st.caption("🕒 Ultimo aggiornamento: " + datetime.utcnow().strftime('%d/%m/%Y %H:%M UTC'))
 
@@ -102,10 +102,14 @@ if pagina == "Meteo Attuale":
         st.markdown(f"### {colore} Indice di Thom: {thom}")
         st.info(f"**Interpretazione:** {desc} — misura il disagio da temperatura e umidità.")
 
-        st.subheader("📈 Andamento ultime 24 ore")
-        df = get_24h_data()
-        if not df.empty:
-            st.line_chart(df.set_index("time"))
+# PAGINA ANDAMENTO 24 ORE
+elif pagina == "Andamento 24 Ore":
+    st.subheader("📈 Andamento ultime 24 ore")
+    df = get_24h_data()
+    if not df.empty:
+        st.line_chart(df.set_index("time"))
+    else:
+        st.warning("Nessun dato disponibile per l'andamento delle ultime 24 ore.")
 
 # PAGINA PREVISIONI
 elif pagina == "Previsioni":
@@ -126,13 +130,7 @@ elif pagina == "Previsioni":
                     <div style='flex:5;padding-left:10px;'>
                         <div style='font-size:17px;font-weight:bold;margin-bottom:6px;'>{giorno}</div>
                         <div style='margin-bottom:4px;'>🌡️ <b>{row["max"]}°C</b> / <b>{row["min"]}°C</b> — ☔ {row["prec"]} mm</div>
-                        <div style='margin-bottom:4px;'>💨 Vento: in aggiornamento &nbsp; 🔆 UV: in aggiornamento</div>
                         <div style='font-style:italic;color:#333;'>🧠 {"Porta l'ombrello" if row["prec"] > 5 else "Giornata tranquilla"}</div>
-                    </div>
-                    <div style='flex:2;text-align:center;'>
-                        <div style='background:{badge_colore};color:white;padding:10px 12px;border-radius:8px;font-weight:bold;box-shadow:1px 1px 4px rgba(0,0,0,0.2);'>
-                            {condizione}
-                        </div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
