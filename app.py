@@ -60,10 +60,17 @@ with st.sidebar:
     st.caption("🕒 Ultimo aggiornamento: " + datetime.utcnow().strftime('%d/%m/%Y %H:%M UTC'))
 
 # PAGINA METEO ATTUALE
+if pagina == "Meteo Attuale":
 
-    # === AI METEO ASSISTANT AVANZATO (solo in METEO ATTUALE) ===
-    st.markdown("### 🤖 AI Meteo Assistant")
-    st.info("Fai una domanda sul meteo a Torre Annunziata. Es: 'Domani piove?', 'Sab afa?', 'Serve ombrello?', 'Tendenza settimana?'")
+
+    # === AI METEO ASSISTANT DEFINITIVO – SOLO IN METEO ATTUALE ===
+    st.markdown("### 🧠 AI Meteo Assistant")
+    st.markdown("""
+    <div style='background-color:#e3f2fd;padding:10px 15px;border-radius:10px;margin-bottom:15px;'>
+        <b>Fai una domanda sul meteo a Torre Annunziata.</b><br>
+        Es: <i>'Domani piove?', 'Sab afa?', 'Serve ombrello?', 'Tendenza settimana?'</i>
+    </div>
+    """, unsafe_allow_html=True)
 
     def interpreta_ai_meteo(domanda, previsioni):
         from datetime import datetime as dt, timedelta
@@ -138,7 +145,6 @@ with st.sidebar:
     except Exception as e:
         st.error("❌ Errore AI Assistant: " + str(e))
 
-if pagina == "Meteo Attuale":
     st.subheader("📍 Condizioni Attuali")
     dati = get_meteo_data()
     if dati:
