@@ -90,7 +90,7 @@ if pagina == "Meteo Attuale":
             colore, desc = "🟡", "Leggero disagio"
         elif thom < 80:
             colore, desc = "🟠", "Disagio percepito"
-        else:
+
             colore, desc = "🔴", "Pericoloso per la salute"
         st.markdown(f"### {colore} Indice di Thom: {thom}")
         st.info(f"**Interpretazione:** {desc} — misura il disagio da temperatura e umidità.")
@@ -138,8 +138,6 @@ if pagina == "Meteo Attuale":
                         continue
                     if not data_target and data_obj.weekday() != idx:
                         continue
-                    if not data_target and data_obj.weekday() != idx:
-                        continue
 
                     min_t = r.get("min", "?")
                     max_t = r.get("max", "?")
@@ -150,7 +148,7 @@ if pagina == "Meteo Attuale":
                         commento += "🌧️ Probabile pioggia, meglio portare l'ombrello. "
                     elif isinstance(pioggia, (int, float)) and pioggia > 0:
                         commento += "🌥️ Possibili deboli precipitazioni. "
-                    else:
+
                         commento += "☀️ Giornata asciutta."
 
                     if isinstance(max_t, (int, float)) and max_t > 30:
@@ -168,7 +166,7 @@ if pagina == "Meteo Attuale":
                     return "📉 Tendenza: settimana instabile e piovosa."
                 elif giorni_pioggia == 0:
                     return "📈 Tendenza: settimana stabile e asciutta."
-                else:
+
                     return "🌦️ Tendenza: alternanza tra sole e pioggia."
             except:
                 return "⚠️ Dati insufficienti per analizzare la tendenza settimanale."
@@ -187,7 +185,10 @@ if pagina == "Meteo Attuale":
 
     
 
-        else:
+
+    
+
+
             st.warning("Nessun dato disponibile.")
 
 # PAGINA PREVISIONI
@@ -224,7 +225,7 @@ elif pagina == "Previsioni":
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-    else:
+
         st.warning("Dati previsionali non disponibili.")
 
 elif pagina == "Radar & Satellite":
