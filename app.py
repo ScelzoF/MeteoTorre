@@ -62,29 +62,11 @@ with st.sidebar:
 # PAGINA METEO ATTUALE
 if pagina == "Meteo Attuale":
 
-    # === AI METEO ASSISTANT SOLO IN METEO ATTUALE ===
+    # ==============================
+    # 🤖 AI METEO ASSISTANT INTEGRATO
+    # ==============================
     st.markdown("### 🧠 AI Meteo Assistant")
     domanda_ai = st.text_input("Scrivi la tua domanda meteo (anche in modo informale):", placeholder="Domani piove? Sab afa? Ombrello lun?")
-
-    @st.cache_data(ttl=600)
-    def get_previsioni():
-        import requests
-        url = (
-            "https://api.open-meteo.com/v1/forecast?"
-            "latitude=40.7633&longitude=14.4522"
-            "&daily=temperature_2m_min,temperature_2m_max,precipitation_sum,uv_index_max,windspeed_10m_max"
-            "&timezone=Europe%2FRome"
-        )
-        r = requests.get(url)
-        d = r.json()["daily"]
-        return pd.DataFrame({
-            "data": d["time"],
-            "min": d["temperature_2m_min"],
-            "max": d["temperature_2m_max"],
-            "prec": d["precipitation_sum"],
-            "uv": d["uv_index_max"],
-            "vento": d["windspeed_10m_max"]
-        })
 
     def interpreta_ai(domanda, previsioni):
         from datetime import datetime as dt
@@ -97,9 +79,9 @@ if pagina == "Meteo Attuale":
             note = []
             if float(r['prec']) > 1:
                 note.append("🌧️ Pioggia prevista")
-            if float(r['uv']) > 6:
+            if 'uv' in r and float(r['uv']) > 6:
                 note.append("🌞 UV elevato")
-            if float(r['vento']) > 30:
+            if 'vento' in r and float(r['vento']) > 30:
                 note.append("💨 Vento forte")
             if float(r['max']) >= 30:
                 note.append("🥵 Giornata calda")
