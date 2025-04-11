@@ -188,6 +188,8 @@ except Exception as e:
 
 
 # === AI METEO ASSISTANT AVANZATO ===
+
+
 def interpreta_ai_esteso(domanda, previsioni):
     from datetime import datetime as dt, timedelta
     giorni_alias = {
@@ -198,74 +200,62 @@ def interpreta_ai_esteso(domanda, previsioni):
         "lunedì": 0, "martedì": 1, "mercoledì": 2, "giovedì": 3, "venerdì": 4, "sabato": 5, "domenica": 6
     }
 
-    now = dt.now()
-    risposta_generale = ""
+    oggi = dt.now().date()
     domanda = domanda.lower()
 
-    # Match giorni
     for parola in domanda.split():
         if parola in giorni_alias:
-            giorno_cercato = giorni_alias[parola]
-            oggi = dt.now().date()
-                if parola in ["oggi", "domani", "dopodomani"]:
-                    data_target = oggi + timedelta(days=giorni_alias[parola])
+            idx = giorni_alias[parola]
+
+            # Se è "oggi", "domani" o "dopodomani" usiamo il calcolo diretto della data
+            if parola in ["oggi", "domani", "dopodomani"]:
+                data_target = oggi + timedelta(days=idx)
+            else:
+                data_target = None  # sarà matchato più avanti tramite weekday
+
+            for _, r in previsioni.iterrows():
+                data_obj = dt.strptime(r["data"], "%Y-%m-%d").date()
+
+                if data_target and data_obj == data_target:
+                    pass
+                elif not data_target and data_obj.weekday() != idx:
+                    continue
+
+                # Giorno italiano
+                giorni_it = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+                nome_giorno = giorni_it[data_obj.weekday()]
+
+                min_t = r["min"]
+                max_t = r["max"]
+                pioggia = r["prec"]
+                vento = r["vento"] if "vento" in r else 0
+
+                commento = ""
+                if pioggia > 2:
+                    commento += " 🌧️ Possibile pioggia: meglio portare l’ombrello. "
+                elif pioggia > 0:
+                    commento += " ☁️ Cielo nuvoloso con qualche goccia. "
                 else:
-                    data_target = None
-                for _, r in previsioni.iterrows():
-                    data_obj = dt.strptime(r['data'], "%Y-%m-%d").date()
-                    if data_target and data_obj == data_target:
-                        pass
-                    elif not data_target and data_obj.weekday() == giorno_cercato:
-                        pass
-                    else:
-                        continue
-                    giorni_settimana = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
-                    nome_giorno = giorni_settimana[data_obj.weekday()]
-                    min_t = r['min']
-                    max_t = r['max']
-                    pioggia = r['prec']
-                    vento = r['vento'] if 'vento' in r else 0
+                    commento += " ☀️ Tempo stabile, nessuna pioggia prevista. "
 
-                    commento = ""
-                    if pioggia > 2:
-                        commento += " 🌧️ Possibile pioggia: meglio portare l’ombrello. "
-                    elif pioggia > 0:
-                        commento += " ☁️ Cielo nuvoloso con qualche goccia. "
-                    else:
-                        commento += " ☀️ Tempo stabile, nessuna pioggia prevista. "
+                if max_t > 30:
+                    commento += " 🔥 Fa molto caldo!"
+                elif max_t < 10:
+                    commento += " 🧥 Giornata fredda."
 
-                    if max_t > 30:
-                        commento += " 🔥 Fa molto caldo!"
-                    elif max_t < 10:
-                        commento += " 🧥 Giornata fredda."
+                if vento > 30:
+                    commento += " 💨 Attenzione al vento forte."
 
-                    if vento > 30:
-                        commento += " 💨 Attenzione al vento forte."
+                return f"{nome_giorno} {data_obj.strftime('%d/%m')}: {min_t}°C / {max_t}°C – Pioggia {pioggia} mm – Vento {vento} km/h." + commento
 
-                    return f"{nome_giorno} {data_obj.strftime('%d/%m')}: {min_t}°C / {max_t}°C – Pioggia {pioggia} mm – Vento {vento} km/h." + commento
-
-    # Domande generiche
     if "tendenza" in domanda or "settimana" in domanda:
-        tendenza = ""
-        giorni_con_pioggia = sum(previsioni['prec'] > 2)
+        giorni_con_pioggia = sum(previsioni["prec"] > 2)
         if giorni_con_pioggia >= 4:
-            tendenza = "Settimana instabile, con diverse giornate piovose. 🌧️"
+            return "📉 Settimana instabile, con diverse giornate piovose. 🌧️"
         elif giorni_con_pioggia == 0:
-            tendenza = "Settimana stabile e asciutta. ☀️"
+            return "📈 Settimana stabile e asciutta. ☀️"
         else:
-            tendenza = "Alternanza tra sole e pioggia nei prossimi giorni. 🌦️"
-        return tendenza
+            return "🌦️ Alternanza tra sole e pioggia nei prossimi giorni."
 
-    return "❓ Domanda non compresa. Prova con: 'pioggia sabato?', 'caldo lunedì?', 'serve ombrello domani?', 'tendenza settimana'."
+    return "❓ Domanda non compresa. Es: 'piove sab?', 'caldo domani?', 'serve ombrello?', 'tendenza settimana'."
 
-# BLOCCO VISIVO – migliorato
-try:
-    st.markdown("### 🧠 AI Meteo Assistant")
-    st.info("Chiedi qualsiasi cosa sul meteo a Torre Annunziata. Esempi: *'Piove domani?', 'Caldo sab?', 'Serve ombrello domenica?', 'Tendenza settimana?'.*")
-    domanda_ai = st.text_input("Scrivi la tua domanda meteo qui:", placeholder="Domani piove? Sab afa? Ombrello lunedì?")
-    if domanda_ai:
-        previsioni_ai = get_previsioni()
-        risposta_ai = interpreta_ai_esteso(domanda_ai, previsioni_ai)
-        st.success("🤖 " + risposta_ai)
-except Exception as e:
-    st.error("❌ Errore AI Assistant: " + str(e))
