@@ -13,9 +13,8 @@ def normalizza_testo(testo):
         " gio ": " giovedì ",
         " ven ": " venerdì ",
         " temp ": " temperatura ",
-        " piov ": " piove ",
-        " afa ": " afa ",
-
+        "piov": "piove",
+    "afa": "afa"
 
 # 📅 Traduzione dei giorni della settimana
 def traduci_giorno(inglese):
