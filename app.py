@@ -148,7 +148,7 @@ elif pagina == "Webcam":
     st.subheader("📷 Webcam Torre Annunziata")
     st.markdown("🔗 [Clicca qui per visualizzare la webcam live su SkylineWebcams](https://www.skylinewebcams.com/it/webcam/italia/campania/napoli/torre-annunziata.html)")
 
-# === AI METEO ASSISTANT AVANZATO ===
+# === AI METEO ASSISTANT AVANZATO E ROBUSTO ===
 def interpreta_ai(domanda, previsioni):
     from datetime import datetime as dt
     domanda = domanda.lower()
@@ -160,15 +160,15 @@ def interpreta_ai(domanda, previsioni):
 
     def analizza(r):
         note = []
-        if float(r['prec']) > 0:
+        if "prec" in r and float(r['prec']) > 0:
             note.append("🌧️ Pioggia prevista")
-        if float(r['uv']) > 6:
+        if "uv" in r and float(r['uv']) > 6:
             note.append("🌞 UV elevato")
-        if float(r['vento']) > 20:
+        if "vento" in r and float(r['vento']) > 20:
             note.append("💨 Vento forte")
-        if float(r['max']) >= 30:
+        if "max" in r and float(r['max']) >= 30:
             note.append("🥵 Giornata calda")
-        if float(r['min']) <= 5:
+        if "min" in r and float(r['min']) <= 5:
             note.append("❄️ Freddo mattutino")
         if not note:
             note.append("☀️ Condizioni meteo stabili")
@@ -176,17 +176,17 @@ def interpreta_ai(domanda, previsioni):
 
     if "oggi" in domanda:
         r = previsioni.iloc[0]
-        return f"Oggi: {r['min']}°C / {r['max']}°C – {analizza(r)}"
+        return f"Oggi: {r.get('min','-')}°C / {r.get('max','-')}°C – {analizza(r)}"
     if "domani" in domanda:
         r = previsioni.iloc[1]
-        return f"Domani: {r['min']}°C / {r['max']}°C – {analizza(r)}"
+        return f"Domani: {r.get('min','-')}°C / {r.get('max','-')}°C – {analizza(r)}"
     for parola in domanda.split():
         for alias, idx in giorni_alias.items():
             if parola.startswith(alias):
                 for _, r in previsioni.iterrows():
                     d = dt.strptime(r['data'], "%Y-%m-%d").date()
                     if d.weekday() == idx:
-                        return f"{d.strftime('%A %d/%m')}: {r['min']}°C / {r['max']}°C – {analizza(r)}"
+                        return f"{d.strftime('%A %d/%m')}: {r.get('min','-')}°C / {r.get('max','-')}°C – {analizza(r)}"
     return "❓ Domanda non compresa. Es: 'piove sab?', 'caldo domani?', 'serve ombrello?'"
 
 # === BLOCCO VISIVO AI ===
@@ -195,6 +195,7 @@ try:
     domanda_ai = st.text_input("Scrivi la tua domanda meteo (anche in modo informale):", placeholder="Domani piove? Sab afa? Ombrello lun?")
     if domanda_ai:
         previsioni_ai = get_previsioni()
+        st.write("🔎 Dati disponibili:", previsioni_ai.columns.tolist())
         risposta_ai = interpreta_ai(domanda_ai, previsioni_ai)
         st.success("🤖 " + risposta_ai)
 except Exception as e:
