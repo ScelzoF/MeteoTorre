@@ -57,7 +57,7 @@ st.markdown("""
 with st.sidebar:
     pagina = st.radio("📋 Menu", ["Meteo Attuale", "Previsioni", "Radar & Satellite", "Webcam"])
     st.markdown("---")
-    st.caption("🕒 Ultimo aggiornamento: " + datetime.utcnow().strftime('%d/%m/%Y %H:%M UTC'))
+    st.caption("🕒 Ultimo aggiornamento: " + datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC'))
 
 # PAGINA METEO ATTUALE
 if pagina == "Meteo Attuale":
@@ -66,7 +66,7 @@ if pagina == "Meteo Attuale":
     st.markdown("### 🧠 AI Meteo Assistant")
     domanda_ai = st.text_input("Scrivi la tua domanda meteo (anche in modo informale):", placeholder="Domani piove? Sab afa? Ombrello lun?")
 
-    @st.cache_data(ttl=600)
+    @st.cache(ttl=600)
     def get_previsioni():
         import requests
         url = (
