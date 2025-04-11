@@ -1,7 +1,16 @@
-def interpreta_ai(domanda, previsioni):
-    import re
-    from datetime import datetime as dt
+import streamlit as st
+import pandas as pd
+from datetime import datetime as dt
 
+# Mock funzione get_forecast() per evitare errori
+def get_forecast():
+    return pd.DataFrame([
+        {'data': '2025-04-11', 'min': 12.5, 'max': 21.7, 'appa_max': 27, 'prec': 0.0, 'vento': 9.2, 'uv': 5.3},
+        {'data': '2025-04-12', 'min': 14.0, 'max': 22.1, 'appa_max': 31, 'prec': 2.1, 'vento': 8.7, 'uv': 6.1},
+        {'data': '2025-04-13', 'min': 13.2, 'max': 25.3, 'appa_max': 30.5, 'prec': 1.2, 'vento': 7.5, 'uv': 6.5},
+    ])
+
+def interpreta_ai(domanda, previsioni):
     domanda = domanda.lower()
     giorni_alias = {
         "lun": 0, "mar": 1, "mer": 2, "gio": 3, "ven": 4, "sab": 5, "dom": 6,
@@ -33,13 +42,15 @@ def interpreta_ai(domanda, previsioni):
         return "🥵 Giorni afosi: " + ", ".join(afosi) if afosi else "🌤️ Nessuna ondata di calore rilevata."
     return risposta
 
-# Blocco AI integrato
-st.subheader("🧠 AI Meteo Assistant")
-user_input = st.text_input("Scrivi la tua domanda meteo:", placeholder="Domani piove? Sab afa? Ombrello lun?")
-if user_input:
-    try:
-        previsioni_ai = get_forecast()
-        risposta = interpreta_ai(user_input, previsioni_ai)
+# INTERFACCIA VISUALE
+st.set_page_config(page_title="Meteo Torre Annunziata", layout="centered")
+st.title("🧠 AI Meteo Assistant")
+
+try:
+    previsioni_ai = get_forecast()
+    domanda = st.text_input("Scrivi la tua domanda meteo:", placeholder="Domani piove? Sab afa? Ombrello lun?")
+    if domanda:
+        risposta = interpreta_ai(domanda, previsioni_ai)
         st.success("🤖 " + risposta)
-    except Exception as e:
-        st.error("Errore AI: " + str(e))
+except Exception as e:
+    st.error("Errore AI: " + str(e))
