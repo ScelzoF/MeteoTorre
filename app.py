@@ -1,17 +1,19 @@
 import streamlit as st
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
 
-# Configurazione della pagina Streamlit
 st.set_page_config(page_title="🌦️ Meteo Torre Annunziata", layout="wide")
 
-# Configurazione API OpenWeather
+# Configurazione OpenWeather API
 OPENWEATHER_API_KEY = "d23fb9868855e4bcb4dcf04404d14a78"
 latitude = 40.7581
 longitude = 14.4492
 
-# Funzione per ottenere i dati meteo attuali
+def calcola_indice_thom(temp, umid):
+    return round(0.8 * temp + ((umid / 100) * (temp - 14.4)) + 46.4, 1)
+
+# Funzione per ottenere i dati meteo attuali da OpenWeather
 def get_meteo_data():
     url = f"http://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&units=metric&appid={OPENWEATHER_API_KEY}"
     r = requests.get(url)
@@ -21,15 +23,15 @@ def get_meteo_data():
         "umidita": data["main"]["humidity"],
         "vento": data["wind"]["speed"],
         "pressione": data["main"]["pressure"],
-        "descrizione": data["weather"][0]["description"].capitalize()
+        "uv": data.get("uv", "N/D"),  # OpenWeather richiede una chiamata separata per l'UV Index
     }
 
-# Funzione per ottenere i dati delle ultime 24 ore
+# Funzione per ottenere i dati delle ultime 24 ore da OpenWeather
 def get_24h_data():
-    url = f"http://api.openweathermap.org/data/2.5/onecall?lat={latitude}&lon={longitude}&exclude=current,minutely,daily,alerts&units=metric&appid={OPENWEATHER_API_KEY}"
+    url = f"http://api.openweathermap.org/data/2.5/onecall/timemachine?lat={latitude}&lon={longitude}&dt={(int(datetime.now().timestamp()) - 86400)}&units=metric&appid={OPENWEATHER_API_KEY}"
     r = requests.get(url)
     data = r.json()
-    hourly_data = data["hourly"][:24]  # Prendi solo le ultime 24 ore
+    hourly_data = data.get("hourly", [])
     return pd.DataFrame({
         "time": [datetime.utcfromtimestamp(hour["dt"]).strftime('%H:%M') for hour in hourly_data],
         "Temperatura (°C)": [hour["temp"] for hour in hourly_data],
@@ -37,17 +39,17 @@ def get_24h_data():
         "Pressione (hPa)": [hour["pressure"] for hour in hourly_data]
     })
 
-# Funzione per ottenere le previsioni a 7 giorni
+# Funzione per ottenere le previsioni a 7 giorni da OpenWeather
 def get_previsioni():
     url = f"http://api.openweathermap.org/data/2.5/onecall?lat={latitude}&lon={longitude}&exclude=current,minutely,hourly,alerts&units=metric&appid={OPENWEATHER_API_KEY}"
     r = requests.get(url)
     data = r.json()
-    daily_data = data["daily"]
+    daily_data = data.get("daily", [])
     return pd.DataFrame({
         "data": [datetime.utcfromtimestamp(day["dt"]).strftime('%Y-%m-%d') for day in daily_data],
         "max": [day["temp"]["max"] for day in daily_data],
         "min": [day["temp"]["min"] for day in daily_data],
-        "prec": [day["rain"] if "rain" in day else 0 for day in daily_data]
+        "prec": [day.get("rain", 0) for day in daily_data]
     })
 
 # HEADER grafico
@@ -60,7 +62,7 @@ st.markdown("""
 
 # SIDEBAR
 with st.sidebar:
-    pagina = st.radio("📋 Menu", ["Meteo Attuale", "Previsioni", "Andamento 24h"])
+    pagina = st.radio("📋 Menu", ["Meteo Attuale", "Previsioni", "Radar & Satellite", "Webcam"])
     st.markdown("---")
     st.caption("🕒 Ultimo aggiornamento: " + datetime.utcnow().strftime('%d/%m/%Y %H:%M UTC'))
 
@@ -69,22 +71,80 @@ if pagina == "Meteo Attuale":
     st.subheader("📍 Condizioni Attuali")
     dati = get_meteo_data()
     if dati:
-        st.markdown(f"### 🌡️ Temperatura: **{dati['temperatura']}°C**")
-        st.markdown(f"### 💧 Umidità: **{dati['umidita']}%**")
-        st.markdown(f"### 💨 Vento: **{dati['vento']} m/s**")
-        st.markdown(f"### 🧭 Pressione: **{dati['pressione']} hPa**")
-        st.markdown(f"### 🌥️ Condizioni: **{dati['descrizione']}**")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown("### 🌡️ Temperatura")
+            st.success(f"{dati['temperatura']} °C")
+        with col2:
+            st.markdown("### 💧 Umidità")
+            st.info(f"{dati['umidita']} %")
+        with col3:
+            st.markdown("### 💨 Vento")
+            st.warning(f"{dati['vento']} m/s")
 
-# PAGINA ANDAMENTO 24H
-elif pagina == "Andamento 24h":
-    st.subheader("📈 Andamento ultime 24 ore")
-    df = get_24h_data()
-    if not df.empty:
-        st.line_chart(df.set_index("time"))
+        col4, col5 = st.columns(2)
+        with col4:
+            st.markdown("### 🌞 UV Index")
+            st.success(f"{dati['uv']}")
+        with col5:
+            st.markdown("### 🧭 Pressione")
+            st.info(f"{dati['pressione']} hPa")
+
+        thom = calcola_indice_thom(dati['temperatura'], dati['umidita'])
+        if thom < 70:
+            colore, desc = "🟢", "Confort ideale"
+        elif thom < 75:
+            colore, desc = "🟡", "Leggero disagio"
+        elif thom < 80:
+            colore, desc = "🟠", "Disagio percepito"
+        else:
+            colore, desc = "🔴", "Pericoloso per la salute"
+        st.markdown(f"### {colore} Indice di Thom: {thom}")
+        st.info(f"**Interpretazione:** {desc} — misura il disagio da temperatura e umidità.")
+
+        st.subheader("📈 Andamento ultime 24 ore")
+        df = get_24h_data()
+        if not df.empty:
+            st.line_chart(df.set_index("time"))
 
 # PAGINA PREVISIONI
 elif pagina == "Previsioni":
     st.subheader("📆 Previsioni 7 Giorni")
     df = get_previsioni()
     if not df.empty:
-        st.dataframe(df)
+        for i, row in df.iterrows():
+            giorni_it = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+            data_obj = datetime.strptime(row["data"], "%Y-%m-%d")
+            giorno = f"{giorni_it[data_obj.weekday()]} {data_obj.strftime('%d/%m')}"
+            icona = "☀️" if row["prec"] < 2 else "🌧️"
+            condizione = "Sereno e soleggiato" if row["prec"] < 2 else "Rovesci nel pomeriggio"
+            colore_sfondo = "#e3f2fd" if row["prec"] < 2 else "#fce4ec"
+            badge_colore = "#0288d1" if row["prec"] < 2 else "#c62828"
+            st.markdown(f"""
+                <div style='display:flex;flex-direction:row;align-items:center;justify-content:space-between;background-color:{colore_sfondo};padding:16px 20px;border-radius:14px;margin-bottom:14px;'>
+                    <div style='flex:1;font-size:40px;text-align:center;'>{icona}</div>
+                    <div style='flex:5;padding-left:10px;'>
+                        <div style='font-size:17px;font-weight:bold;margin-bottom:6px;'>{giorno}</div>
+                        <div style='margin-bottom:4px;'>🌡️ <b>{row["max"]}°C</b> / <b>{row["min"]}°C</b> — ☔ {row["prec"]} mm</div>
+                        <div style='margin-bottom:4px;'>💨 Vento: in aggiornamento &nbsp; 🔆 UV: in aggiornamento</div>
+                        <div style='font-style:italic;color:#333;'>🧠 {"Porta l'ombrello" if row["prec"] > 5 else "Giornata tranquilla"}</div>
+                    </div>
+                    <div style='flex:2;text-align:center;'>
+                        <div style='background:{badge_colore};color:white;padding:10px 12px;border-radius:8px;font-weight:bold;box-shadow:1px 1px 4px rgba(0,0,0,0.2);'>
+                            {condizione}
+                        </div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+# PAGINA RADAR & SATELLITE
+elif pagina == "Radar & Satellite":
+    st.subheader("🌧️ Radar - Windy")
+    st.components.v1.iframe("https://embed.windy.com/embed2.html?lat=40.75&lon=14.45&detailLat=40.75&detailLon=14.45&width=700&height=450&zoom=8&level=surface&overlay=rain&menu=true", height=450)
+    st.subheader("🛰️ Satellite - Windy")
+    st.components.v1.iframe("https://embed.windy.com/embed2.html?lat=40.75&lon=14.45&detailLat=40.75&detailLon=14.45&width=700&height=450&zoom=6&level=surface&overlay=satellite&menu=false", height=450)
+
+# PAGINA WEBCAM
+elif pagina == "Webcam":
+    st.subheader("📷 Webcam Torre Annunziata")
+    st.markdown("🔗 [Clicca qui per visualizzare la webcam live su SkylineWebcams](https://www.skylinewebcams.com/it/webcam/italia/campania/napoli/torre-annunziata.html)")
