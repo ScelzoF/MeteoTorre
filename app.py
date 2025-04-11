@@ -148,7 +148,7 @@ if pagina == "Meteo Attuale":
                         commento += "🌧️ Probabile pioggia, meglio portare l'ombrello. "
                     elif isinstance(pioggia, (int, float)) and pioggia > 0:
                         commento += "🌥️ Possibili deboli precipitazioni. "
-
+                    else:
                         commento += "☀️ Giornata asciutta."
 
                     if isinstance(max_t, (int, float)) and max_t > 30:
@@ -166,7 +166,7 @@ if pagina == "Meteo Attuale":
                     return "📉 Tendenza: settimana instabile e piovosa."
                 elif giorni_pioggia == 0:
                     return "📈 Tendenza: settimana stabile e asciutta."
-
+                else:
                     return "🌦️ Tendenza: alternanza tra sole e pioggia."
             except:
                 return "⚠️ Dati insufficienti per analizzare la tendenza settimanale."
@@ -175,6 +175,16 @@ if pagina == "Meteo Attuale":
 
     try:
         domanda_ai = st.text_input("Scrivi la tua domanda meteo:", placeholder="Domani piove? Sab afa? Ombrello lunedì?")
+        if domanda_ai:
+            previsioni_ai = get_previsioni()
+            risposta = interpreta_ai_meteo(domanda_ai, previsioni_ai)
+            st.success("🧠 " + risposta)
+    except Exception as e:
+        st.error("❌ Errore AI Assistant: " + str(e))
+
+
+    # === AI METEO ASSISTANT — SOLO IN METEO ATTUALE ===
+    
         if domanda_ai:
             previsioni_ai = get_previsioni()
             risposta = interpreta_ai_meteo(domanda_ai, previsioni_ai)
