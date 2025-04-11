@@ -262,6 +262,89 @@ if pagina == "Meteo Attuale":
     except Exception as e:
         st.error("❌ Errore AI Assistant: " + str(e))
 
+
+    # === AI METEO ASSISTANT — SOLO IN METEO ATTUALE ===
+    st.markdown("### 🧠 AI Meteo Assistant")
+    st.markdown("""
+    <div style='background-color:#e3f2fd;padding:10px 15px;border-radius:10px;margin-bottom:15px;'>
+        <b>Fai una domanda sul meteo a Torre Annunziata.</b><br>
+        Es: <i>'Domani piove?', 'Sab afa?', 'Serve ombrello?', 'Tendenza settimana?'</i>
+    </div>
+    """, unsafe_allow_html=True)
+
+    def interpreta_ai_meteo(domanda, previsioni):
+        from datetime import datetime as dt, timedelta
+
+        giorni_alias = {
+            "oggi": 0, "domani": 1, "dopodomani": 2,
+            "lun": 0, "mar": 1, "mer": 2, "gio": 3, "ven": 4, "sab": 5, "dom": 6,
+            "lunedì": 0, "martedì": 1, "mercoledì": 2, "giovedì": 3,
+            "venerdì": 4, "sabato": 5, "domenica": 6
+        }
+
+        giorni_it = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+        oggi = dt.now().date()
+        domanda = domanda.lower()
+
+        for parola in domanda.split():
+            if parola in giorni_alias:
+                idx = giorni_alias[parola]
+                data_target = oggi + timedelta(days=idx) if parola in ["oggi", "domani", "dopodomani"] else None
+
+                for _, r in previsioni.iterrows():
+                    try:
+                        data_obj = dt.strptime(r.get("data", ""), "%Y-%m-%d").date()
+                    except:
+                        continue
+
+                    if data_target and data_obj != data_target:
+                        continue
+                    if not data_target and data_obj.weekday() != idx:
+                        continue
+
+                    min_t = r.get("min", "?")
+                    max_t = r.get("max", "?")
+                    pioggia = r.get("prec", 0)
+
+                    commento = ""
+                    if isinstance(pioggia, (int, float)) and pioggia > 2:
+                        commento += "🌧️ Probabile pioggia, meglio portare l'ombrello. "
+                    elif isinstance(pioggia, (int, float)) and pioggia > 0:
+                        commento += "🌥️ Possibili deboli precipitazioni. "
+                    else:
+                        commento += "☀️ Giornata asciutta."
+
+                    if isinstance(max_t, (int, float)) and max_t > 30:
+                        commento += " 🔥 Fa molto caldo."
+                    elif isinstance(max_t, (int, float)) and max_t < 10:
+                        commento += " 🧥 Giornata fredda."
+
+                    giorno_it = giorni_it[data_obj.weekday()]
+                    return f"{giorno_it} {data_obj.strftime('%d/%m')}: {min_t}°C / {max_t}°C – Pioggia {pioggia} mm. {commento}"
+
+        if "tendenza" in domanda or "settimana" in domanda:
+            try:
+                giorni_pioggia = sum(previsioni["prec"] > 2)
+                if giorni_pioggia >= 4:
+                    return "📉 Tendenza: settimana instabile e piovosa."
+                elif giorni_pioggia == 0:
+                    return "📈 Tendenza: settimana stabile e asciutta."
+                else:
+                    return "🌦️ Tendenza: alternanza tra sole e pioggia."
+            except:
+                return "⚠️ Dati insufficienti per analizzare la tendenza settimanale."
+
+        return "❓ Domanda non compresa. Es: 'piove sabato?', 'caldo lunedì?', 'serve ombrello domani?', 'tendenza settimana'."
+
+    try:
+        domanda_ai = st.text_input("Scrivi la tua domanda meteo:", placeholder="Domani piove? Sab afa? Ombrello lunedì?")
+        if domanda_ai:
+            previsioni_ai = get_previsioni()
+            risposta = interpreta_ai_meteo(domanda_ai, previsioni_ai)
+            st.success("🧠 " + risposta)
+    except Exception as e:
+        st.error("❌ Errore AI Assistant: " + str(e))
+
         else:
             st.warning("Nessun dato disponibile.")
 
