@@ -212,7 +212,7 @@ def interpreta_ai_esteso(domanda, previsioni):
                     min_t = r['min']
                     max_t = r['max']
                     pioggia = r['prec']
-                    vento = r['vento']
+                    vento = r['vento'] if 'vento' in r else 0
 
                     commento = ""
                     if pioggia > 2:
