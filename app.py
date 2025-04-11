@@ -1,6 +1,43 @@
 import streamlit as st
 import requests
 from datetime import timezone
+
+# 🔄 Funzione per espandere abbreviazioni comuni
+def normalizza_testo(testo):
+    dizionario = {
+        " dom ": " domani ",
+        " sab ": " sabato ",
+        " lun ": " lunedì ",
+        " mar ": " martedì ",
+        " mer ": " mercoledì ",
+        " gio ": " giovedì ",
+        " ven ": " venerdì ",
+        " temp ": " temperatura ",
+        " piov ": " piove ",
+        " afa ": " afa ",
+
+# 📅 Traduzione dei giorni della settimana
+def traduci_giorno(inglese):
+    giorni = {
+        "monday": "Lunedì",
+        "tuesday": "Martedì",
+        "wednesday": "Mercoledì",
+        "thursday": "Giovedì",
+        "friday": "Venerdì",
+        "saturday": "Sabato",
+        "sunday": "Domenica"
+    }
+    return giorni.get(inglese.lower(), inglese)
+
+        " uv ": " indice uv ",
+        " vento ": " vento ",
+        " ombrello ": " ombrello ",
+    }
+    testo = f" {testo.lower()} "
+    for abbrev, espanso in dizionario.items():
+        testo = testo.replace(abbrev, espanso)
+    return testo.strip()
+
 from datetime import datetime
 import pandas as pd
 
