@@ -113,7 +113,9 @@ elif pagina == "Previsioni":
     df = get_previsioni()
     if not df.empty:
         for i, row in df.iterrows():
-            giorno = datetime.strptime(row["data"], "%Y-%m-%d").strftime("%A %d/%m")
+            giorni_it = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+            data_obj = datetime.strptime(row["data"], "%Y-%m-%d")
+            giorno = f"{giorni_it[data_obj.weekday()]} {data_obj.strftime('%d/%m')}"
             icona = "☀️" if row["prec"] < 2 else "🌧️"
             condizione = "Sereno e soleggiato" if row["prec"] < 2 else "Rovesci nel pomeriggio"
             colore_sfondo = "#e3f2fd" if row["prec"] < 2 else "#fce4ec"
@@ -204,9 +206,19 @@ def interpreta_ai_esteso(domanda, previsioni):
     for parola in domanda.split():
         if parola in giorni_alias:
             giorno_cercato = giorni_alias[parola]
-            for _, r in previsioni.iterrows():
-                data_obj = dt.strptime(r['data'], "%Y-%m-%d").date()
-                if data_obj.weekday() == giorno_cercato:
+            oggi = dt.now().date()
+                if parola in ["oggi", "domani", "dopodomani"]:
+                    data_target = oggi + timedelta(days=giorni_alias[parola])
+                else:
+                    data_target = None
+                for _, r in previsioni.iterrows():
+                    data_obj = dt.strptime(r['data'], "%Y-%m-%d").date()
+                    if data_target and data_obj == data_target:
+                        pass
+                    elif not data_target and data_obj.weekday() == giorno_cercato:
+                        pass
+                    else:
+                        continue
                     giorni_settimana = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
                     nome_giorno = giorni_settimana[data_obj.weekday()]
                     min_t = r['min']
