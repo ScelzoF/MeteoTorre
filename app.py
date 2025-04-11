@@ -189,7 +189,7 @@ if pagina == "Meteo Attuale":
     
 
 
-            st.warning("Nessun dato disponibile.")
+        st.warning("Nessun dato disponibile.")
 
 # PAGINA PREVISIONI
 
