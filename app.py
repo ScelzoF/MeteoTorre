@@ -186,9 +186,6 @@ except Exception as e:
 
 
 # === AI METEO ASSISTANT AVANZATO ===
-import locale
-locale.setlocale(locale.LC_TIME, "it_IT.UTF-8")
-
 def interpreta_ai_esteso(domanda, previsioni):
     from datetime import datetime as dt, timedelta
     giorni_alias = {
@@ -210,7 +207,8 @@ def interpreta_ai_esteso(domanda, previsioni):
             for _, r in previsioni.iterrows():
                 data_obj = dt.strptime(r['data'], "%Y-%m-%d").date()
                 if data_obj.weekday() == giorno_cercato:
-                    nome_giorno = data_obj.strftime("%A").capitalize()
+                    giorni_settimana = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+                    nome_giorno = giorni_settimana[data_obj.weekday()]
                     min_t = r['min']
                     max_t = r['max']
                     pioggia = r['prec']
