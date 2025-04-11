@@ -16,6 +16,7 @@ def normalizza_testo(testo):
         " piov ": " piove ",
         " afa ": " afa ",
 
+
 # 📅 Traduzione dei giorni della settimana
 def traduci_giorno(inglese):
     giorni = {
