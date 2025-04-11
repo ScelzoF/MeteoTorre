@@ -193,6 +193,7 @@ except Exception as e:
 
 
 
+
 def interpreta_ai_esteso(domanda, previsioni):
     from datetime import datetime as dt, timedelta
 
@@ -214,7 +215,7 @@ def interpreta_ai_esteso(domanda, previsioni):
 
             for _, r in previsioni.iterrows():
                 try:
-                    data_obj = dt.strptime(r["data"], "%Y-%m-%d").date()
+                    data_obj = dt.strptime(r.get("data", ""), "%Y-%m-%d").date()
                 except:
                     continue
 
@@ -229,9 +230,9 @@ def interpreta_ai_esteso(domanda, previsioni):
                 vento = r.get("vento", 0)
 
                 commento = ""
-                if pioggia > 2:
+                if isinstance(pioggia, (int, float)) and pioggia > 2:
                     commento += "🌧️ Possibile pioggia: meglio portare l’ombrello. "
-                elif pioggia > 0:
+                elif isinstance(pioggia, (int, float)) and pioggia > 0:
                     commento += "🌥️ Qualche goccia possibile. "
                 else:
                     commento += "☀️ Tempo stabile, nessuna pioggia prevista. "
@@ -249,7 +250,7 @@ def interpreta_ai_esteso(domanda, previsioni):
 
     if "tendenza" in domanda or "settimana" in domanda:
         try:
-            giorni_con_pioggia = sum(previsioni["prec"] > 2)
+            giorni_con_pioggia = sum(previsioni.get("prec", 0) > 2)
             if giorni_con_pioggia >= 4:
                 return "📉 Settimana instabile, con diverse giornate piovose."
             elif giorni_con_pioggia == 0:
