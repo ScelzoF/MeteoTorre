@@ -63,23 +63,42 @@ with st.sidebar:
 if pagina == "Meteo Attuale":
     st.subheader("📍 Condizioni Attuali")
     dati = get_meteo_data()
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-    with col1:
-        st.metric("🌡️ Temperatura", f"{dati['temperatura']} °C")
-    with col2:
-        st.metric("💧 Umidità", f"{dati['umidita']} %")
-    with col3:
-        st.metric("💨 Vento", f"{dati['vento']} km/h")
-    with col4:
-        st.metric("🌞 UV", f"{dati['uv']}")
-    with col5:
-        st.metric("📈 Pressione", f"{dati['pressione']} hPa")
-    with col6:
-        thom = calcola_indice_thom(dati['temperatura'], dati['umidita'])
-        st.metric("🥵 Indice Thom", f"{thom} 🌡️")
+    if dati:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown("### 🌡️ Temperatura")
+            st.success(f"{dati['temperatura']} °C")
+        with col2:
+            st.markdown("### 💧 Umidità")
+            st.info(f"{dati['umidita']} %")
+        with col3:
+            st.markdown("### 💨 Vento")
+            st.warning(f"{dati['vento']} km/h")
 
-    df = get_24h_data()
-    st.line_chart(df.set_index("time"))
+        col4, col5 = st.columns(2)
+        with col4:
+            st.markdown("### 🌞 UV Index")
+            st.success(f"{dati['uv']}")
+        with col5:
+            st.markdown("### 🧭 Pressione")
+            st.info(f"{dati['pressione']} hPa")
+
+        thom = calcola_indice_thom(dati['temperatura'], dati['umidita'])
+        if thom < 70:
+            colore, desc = "🟢", "Confort ideale"
+        elif thom < 75:
+            colore, desc = "🟡", "Leggero disagio"
+        elif thom < 80:
+            colore, desc = "🟠", "Disagio percepito"
+        else:
+            colore, desc = "🔴", "Pericoloso per la salute"
+        st.markdown(f"### {colore} Indice di Thom: {thom}")
+        st.info(f"**Interpretazione:** {desc} — misura il disagio da temperatura e umidità.")
+
+        st.subheader("📈 Andamento ultime 24 ore")
+        df = get_24h_data()
+        if not df.empty:
+            st.line_chart(df.set_index("time"))
 
     # === AI METEO ASSISTANT — SOLO IN METEO ATTUALE ===
     st.markdown("### 🧠 AI Meteo Assistant")
