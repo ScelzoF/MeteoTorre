@@ -244,4 +244,3 @@ elif pagina == "Radar & Satellite":
 elif pagina == "Webcam":
     st.subheader("📷 Webcam Torre Annunziata")
     st.markdown("🔗 [Clicca qui per visualizzare la webcam live su SkylineWebcams](https://www.skylinewebcams.com/it/webcam/italia/campania/napoli/torre-annunziata.html)")
-
