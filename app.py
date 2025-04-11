@@ -62,42 +62,8 @@ with st.sidebar:
 # PAGINA METEO ATTUALE
 if pagina == "Meteo Attuale":
     st.subheader("📍 Condizioni Attuali")
-    dati = get_meteo_data()
-    if dati:
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown("### 🌡️ Temperatura")
-            st.success(f"{dati['temperatura']} °C")
-        with col2:
-            st.markdown("### 💧 Umidità")
-            st.info(f"{dati['umidita']} %")
-        with col3:
-            st.markdown("### 💨 Vento")
-            st.warning(f"{dati['vento']} km/h")
 
-        col4, col5 = st.columns(2)
-        with col4:
-            st.markdown("### 🌞 UV Index")
-            st.success(f"{dati['uv']}")
-        with col5:
-            st.markdown("### 🧭 Pressione")
-            st.info(f"{dati['pressione']} hPa")
-
-        thom = calcola_indice_thom(dati['temperatura'], dati['umidita'])
-        if thom < 70:
-            colore, desc = "🟢", "Confort ideale"
-        elif thom < 75:
-            colore, desc = "🟡", "Leggero disagio"
-        elif thom < 80:
-            colore, desc = "🟠", "Disagio percepito"
-        else:
-            colore, desc = "🔴", "Pericoloso per la salute"
-        st.markdown(f"### {colore} Indice di Thom: {thom}")
-        st.info(f"**Interpretazione:** {desc} — misura il disagio da temperatura e umidità.")
-
-        st.subheader("📈 Andamento ultime 24 ore")
-
-    # === AI METEO ASSISTANT DEFINITIVO – SOLO IN METEO ATTUALE ===
+    # === AI METEO ASSISTANT — SOLO IN METEO ATTUALE ===
     st.markdown("### 🧠 AI Meteo Assistant")
     st.markdown("""
     <div style='background-color:#e3f2fd;padding:10px 15px;border-radius:10px;margin-bottom:15px;'>
@@ -179,6 +145,40 @@ if pagina == "Meteo Attuale":
     except Exception as e:
         st.error("❌ Errore AI Assistant: " + str(e))
 
+    dati = get_meteo_data()
+    if dati:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown("### 🌡️ Temperatura")
+            st.success(f"{dati['temperatura']} °C")
+        with col2:
+            st.markdown("### 💧 Umidità")
+            st.info(f"{dati['umidita']} %")
+        with col3:
+            st.markdown("### 💨 Vento")
+            st.warning(f"{dati['vento']} km/h")
+
+        col4, col5 = st.columns(2)
+        with col4:
+            st.markdown("### 🌞 UV Index")
+            st.success(f"{dati['uv']}")
+        with col5:
+            st.markdown("### 🧭 Pressione")
+            st.info(f"{dati['pressione']} hPa")
+
+        thom = calcola_indice_thom(dati['temperatura'], dati['umidita'])
+        if thom < 70:
+            colore, desc = "🟢", "Confort ideale"
+        elif thom < 75:
+            colore, desc = "🟡", "Leggero disagio"
+        elif thom < 80:
+            colore, desc = "🟠", "Disagio percepito"
+        else:
+            colore, desc = "🔴", "Pericoloso per la salute"
+        st.markdown(f"### {colore} Indice di Thom: {thom}")
+        st.info(f"**Interpretazione:** {desc} — misura il disagio da temperatura e umidità.")
+
+        st.subheader("📈 Andamento ultime 24 ore")
         df = get_24h_data()
         if not df.empty:
             st.line_chart(df.set_index("time"))
@@ -231,4 +231,37 @@ elif pagina == "Webcam":
     st.subheader("📷 Webcam Torre Annunziata")
     st.markdown("🔗 [Clicca qui per visualizzare la webcam live su SkylineWebcams](https://www.skylinewebcams.com/it/webcam/italia/campania/napoli/torre-annunziata.html)")
 
-)
+# === AI METEO ASSISTANT ===
+def interpreta_ai(domanda, previsioni):
+    from datetime import datetime as dt
+    domanda = domanda.lower()
+    giorni_alias = {
+        "lun": 0, "mar": 1, "mer": 2, "gio": 3, "ven": 4, "sab": 5, "dom": 6,
+        "luned": 0, "mart": 1, "merc": 2, "giov": 3, "vener": 4, "sabat": 5, "domen": 6
+    }
+    oggi = dt.now().date()
+    if "oggi" in domanda:
+        r = previsioni.iloc[0]
+        return f"Oggi: {r['min']}°C / {r['max']}°C – Pioggia {r['prec']} mm – Vento {r['vento']} km/h"
+    if "domani" in domanda:
+        r = previsioni.iloc[1]
+        return f"Domani: {r['min']}°C / {r['max']}°C – Pioggia {r['prec']} mm – Vento {r['vento']} km/h"
+    for parola in domanda.split():
+        for alias, idx in giorni_alias.items():
+            if parola.startswith(alias):
+                for _, r in previsioni.iterrows():
+                    d = dt.strptime(r['data'], "%Y-%m-%d").date()
+                    if d.weekday() == idx:
+                        return f"{d.strftime('%A %d/%m')}: {r['min']}°C / {r['max']}°C – Pioggia {r['prec']} mm – Vento {r['vento']} km/h"
+    return "❓ Domanda non compresa. Es: 'piove sab?', 'caldo domani?', 'serve ombrello?'"
+
+# === BLOCCO VISIVO AI ===
+try:
+    st.subheader("🧠 AI Meteo Assistant")
+    domanda_ai = st.text_input("Scrivi la tua domanda meteo:", placeholder="Domani piove? Sab afa? Ombrello lun?")
+    if domanda_ai:
+        previsioni_ai = get_previsioni()
+        risposta_ai = interpreta_ai(domanda_ai, previsioni_ai)
+        st.success("🤖 " + risposta_ai)
+except Exception as e:
+    st.error("❌ Errore AI Assistant: " + str(e))
